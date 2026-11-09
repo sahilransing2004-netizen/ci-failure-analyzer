@@ -1,0 +1,43 @@
+name: Report CI failure
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  report:
+    if: github.event.workflow_run.conclusion == 'failure'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Collect failed job logs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh run view "$RUN_ID" --repo "$REPO" --log-failed | tail -c 20000 > failed.log
+          echo "Collected $(wc -c < failed.log) bytes of logs"
+
+      - name: Send logs to the analyzer
+        env:
+          ANALYZER_URL: ${{ vars.ANALYZER_URL }}
+          WEBHOOK_TOKEN: ${{ secrets.WEBHOOK_TOKEN }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          REPO: ${{ github.repository }}
+          WORKFLOW: ${{ github.event.workflow_run.name }}
+        run: |
+          jq -n \
+            --arg repo "$REPO" \
+            --arg workflow "$WORKFLOW" \
+            --argjson run_id "$RUN_ID" \
+            --rawfile log failed.log \
+            '{repo: $repo, workflow: $workflow, run_id: $run_id, log: $log}' > payload.json
+          curl -fsS --max-time 300 -X POST "$ANALYZER_URL/webhook/failure" \
+            -H "Content-Type: application/json" \
+            -H "X-Webhook-Token: $WEBHOOK_TOKEN" \
+            --data @payload.json
