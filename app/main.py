@@ -51,7 +51,7 @@ def receive_failure(report: FailureReport, db: Session = Depends(get_db)):
     return {"received": True, "id": failure.id, "analysis": failure.analysis}
 
 
-@app.get("/failures")
+@app.get("/failures", dependencies=[Depends(require_token)])
 def list_failures(db: Session = Depends(get_db)):
     rows = db.query(Failure).order_by(Failure.id.desc()).all()
     return [
@@ -67,7 +67,7 @@ def list_failures(db: Session = Depends(get_db)):
     ]
 
 
-@app.get("/failures/{failure_id}")
+@app.get("/failures/{failure_id}", dependencies=[Depends(require_token)])
 def get_failure(failure_id: int, db: Session = Depends(get_db)):
     row = db.get(Failure, failure_id)
     if row is None:

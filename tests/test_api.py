@@ -39,11 +39,16 @@ def test_webhook_stores_and_analyzes(monkeypatch):
     body = response.json()
     assert body["analysis"] == "Root Cause: test"
 
-    detail = client.get(f"/failures/{body['id']}")
+    detail = client.get(f"/failures/{body['id']}", headers=HEADERS)
     assert detail.status_code == 200
     assert detail.json()["repo"] == "sahil/demo"
 
 
 def test_get_missing_failure_returns_404():
-    response = client.get("/failures/999999")
+    response = client.get("/failures/999999", headers=HEADERS)
     assert response.status_code == 404
+
+
+def test_read_endpoints_require_token():
+    assert client.get("/failures").status_code == 401
+    assert client.get("/failures/1").status_code == 401
