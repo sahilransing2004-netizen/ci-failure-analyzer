@@ -85,15 +85,15 @@ The app runs locally and GitHub Actions reaches it through a Cloudflare quick tu
    ```
 3. Start the tunnel in a separate terminal and keep it open:
    ```bash
-   cloudflared tunnel --url http://localhost:8080
+   cloudflared tunnel --protocol http2 --url http://localhost:8000
    ```
 4. Copy the `https://<random>.trycloudflare.com` URL it prints.
 5. Update the repository variable `ANALYZER_URL` (Settings → Secrets and variables → Actions → Variables) to that URL. Use the base URL only; the workflow adds `/webhook/failure`.
 6. Verify the API is up:
    ```bash
-   curl -s localhost:8080/health
+   curl -s localhost:8000/health
    ```
 7. Trigger a failing CI run and confirm it was analyzed:
    ```bash
-   curl -s -H "X-Webhook-Token: $WEBHOOK_TOKEN" localhost:8080/failures
+   curl -s -H "X-Webhook-Token: $WEBHOOK_TOKEN" localhost:8000/failures
    ```
