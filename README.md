@@ -97,3 +97,13 @@ The app runs locally and GitHub Actions reaches it through a Cloudflare quick tu
    ```bash
    curl -s -H "X-Webhook-Token: $WEBHOOK_TOKEN" localhost:8000/failures
    ```
+
+## Restart the public demo
+
+The Cloudflare quick tunnel URL changes every time the tunnel restarts, so after a restart:
+
+1. Start the tunnel: `nohup cloudflared tunnel --url http://localhost:8080 > /tmp/cloudflared.log 2>&1 &`
+2. Read the new URL: `grep -o 'https://[a-z0-9-]*\.trycloudflare\.com' /tmp/cloudflared.log | head -1`
+3. In the GitHub repo, go to Settings, Secrets and variables, Actions, Variables, and update `ANALYZER_URL` with the new URL.
+
+Stop the tunnel at any time with `pkill cloudflared`.
